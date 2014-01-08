@@ -3,7 +3,6 @@
 from matrix_keypad import RPi_GPIO as gpio
 from time import sleep
 from subprocess import call
-import serial
 
 class RfidKeypad:
   COLUMNS = [24,23,18]
@@ -14,22 +13,20 @@ class RfidKeypad:
   DOOR_LOCK = 22
 
   lastRFID = ''
+  lastRFIDTime = 0
   lastKey = ''
+  firstRun = True
   
   def __init__(self):
-    call(["gpio", "reset"])
-
     self.kb = gpio.keypad(columnCount = 3)
     self.kb.COLUMN = self.COLUMNS
     self.kb.ROW = self.ROWS
-    
-    port = serial.Serial("/dev/ttyAMA0", baudrate=9600)
     
     gpio.GPIO.setup(self.GREEN_LED,gpio.GPIO.OUT)
     gpio.GPIO.output(self.GREEN_LED,gpio.GPIO.LOW)
     gpio.GPIO.setup(self.RED_LED,gpio.GPIO.OUT)
     gpio.GPIO.output(self.RED_LED,gpio.GPIO.LOW)
-    gpio.GPIO.setup(self.DOOR_LOCK,gpio.GPIO.OUT)
+    gpio.GPIO.setup(self.DOOR_LOCK,gpio.GPIO.OUT,gpio.GPIO.PUD_DOWN)
     gpio.GPIO.output(self.DOOR_LOCK,gpio.GPIO.LOW)
 
   def __enter__(self):
@@ -50,7 +47,7 @@ class RfidKeypad:
   def flashGreen(self,timeToFlash=1):
     self.turnOnGreen()
     sleep(timeToFlash)
-    self.turnOnGreen()
+    self.turnOffGreen()
 
   def turnOnRed(self):
     self.changePinState(self.RED_LED,gpio.GPIO.HIGH)
@@ -61,9 +58,9 @@ class RfidKeypad:
   def flashRed(self,timeToFlash=1):
     self.turnOnRed()
     sleep(timeToFlash)
-    self.turnOnRed()
+    self.turnOffRed()
 
-  def openDoorLock(self,timeToFlash=1):
+  def openDoorLock(self,timeToFlash=5):
     self.turnOnGreen()
     self.changePinState(self.DOOR_LOCK,gpio.GPIO.HIGH)
     sleep(timeToFlash)
@@ -72,14 +69,31 @@ class RfidKeypad:
 
   def getKeyPress(self):
     key = self.kb.getKey()
+    if key == 0:
+      key = str('0')
+    if key:
+      self.flashGreen(0.05)
+    return key
+
+  def getKeyEntry(self):
+    key = self.getKeyPress()
+    while (key == self.lastKey):
+      key = self.getKeyPress()
+      sleep(0.05)
+    self.lastKey = key
     return key
 
   def getRfid(self):
-    key = ''
-    numBytes = self.port.isWaiting()
-    if numBytes > 0:
-      key = self.port.read(numBytes)
-    return key
+    rfidStr = open('lastRfid.txt','r').readline()
+    rfid,curTime = rfidStr.split(',')
+    if curTime != self.lastRFIDTime:
+      self.lastRFID = rfid
+      self.lastRFIDTime = curTime
+      if self.firstRun:
+        self.firstRun = False
+        return ''
+      return self.lastRFID
+    return ''
 
 if __name__ == "__main__":
   rfid = RfidKeypad()
@@ -91,9 +105,10 @@ if __name__ == "__main__":
       if rfidKey:
         print rfidKey
   
-      curKeypad = rfid.getKeyPress()
-      if (curKeyPad != None):
+      curKeyPad = rfid.getKeyEntry()
+      if curKeyPad:
         print curKeyPad
+      curKeyPad = None
       
       sleep(0.1)
     except KeyboardInterrupt:

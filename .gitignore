@@ -2,3 +2,6 @@ include/
 bin/
 lib/
 local/
+*.pyc
+*.csv
+lastRfid.txt
