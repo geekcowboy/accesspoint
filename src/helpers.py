@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import hashlib
-from time import sleep
+from time import sleep, ctime
 
 def loadAuthList():
   authorized = []
@@ -23,7 +23,7 @@ def isAuthed(authList,rfid,pin):
 
 def logAccess(rfid):
   with open("accessLog.csv","a+") as f:
-    f.write("%s\n" % rfid)
+    f.write("%s,%s\n" % (rfid,ctime()))
 
 def addAccess(user,rfid,pin):
   with open("authList.csv","a+") as f:
