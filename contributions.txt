@@ -1,0 +1,12 @@
+In order to contribute to this project,
+
+It is encouraged for members of PaxSpace to request access to this project
+directly instead of "Forking and submitting pull requests"
+
+The public will follow Githubs fork/pull contribution methods
+
+There will always be two active branches, master and develop.
+All new code (except potential hot fixes and potential RC )
+shall be branched from develop. The develop branch shall never be in a 
+complete state of not working, no pieces of code that are still being 
+troubleshooted should be merged into develop.

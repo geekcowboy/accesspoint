@@ -1,3 +1,4 @@
-use the requirements.txt file for virtualenv
+This project is now in its second revision.
 
-pip install -r requirements.txt
+Project requirements are kept at:
+http://wiki.paxspace.org/index.php?title=RFID_v2
